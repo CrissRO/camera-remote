@@ -14,7 +14,7 @@ impath = f'./data/train/images/'
 training_data = pd.read_csv('./data/train/data.csv')
 X = []
 for img in training_data["image"].loc[:]:
-    X.append(cv2.imread(f'{impath}{img}.jpg',0))
+    X.append(cv2.resize(cv2.imread(f'{impath}{img}.jpg',0),(128,128)))
 y = training_data["label"]
 
 X = np.array(X)
@@ -29,7 +29,7 @@ X = X.astype("float32")/255
 y = to_categorical(y)
 
 model = Sequential()
-model.add(Conv2D(256, (3,3), activation='relu',kernel_initializer='he_uniform',input_shape=in_shape))
+model.add(Conv2D(128, (3,3), activation='relu',kernel_initializer='he_uniform',input_shape=in_shape))
 model.add(MaxPool2D((2, 2)))
 model.add(Flatten())
 model.add(Dense(100, activation='relu', kernel_initializer='he_uniform'))
@@ -37,8 +37,8 @@ model.add(Dense(n_classes, activation='softmax'))
 
 model.compile(optimizer='sgd', loss='categorical_crossentropy', metrics=['accuracy'])
 
-model.fit(X, y, epochs=10, batch_size=128)
-'''
+model.fit(X, y, epochs=10, batch_size=1)
+
 video = cv2.VideoCapture(0)
 running = True
 
@@ -46,11 +46,16 @@ while running:
     check,frame = video.read()
     frame = cv2.resize(frame,(256,256))
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    input_frame = cv2.resize(frame,(128,128))
+    input_frame = np.reshape(input_frame,(1,input_frame.shape[0],input_frame.shape[1],1))
     cv2.imshow("Capture",frame)
     key = cv2.waitKey(1)
     
+    pred = model.predict(input_frame)
+    predicted_class = np.argmax(pred)
+    print(predicted_class)
     if key == ord('q'):
         running = False
         
 video.release()
-'''
+
